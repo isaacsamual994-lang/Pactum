@@ -15,6 +15,7 @@
  */
 
 export { PactumClient } from './client.js';
+export type { RpcPoolOptions, RpcNodeHealth } from './rpcPool.js';
 export { CommitmentStatus } from './types.js';
 export type {
   Commitment,

@@ -10,6 +10,7 @@
  */
 import { Contract, Keypair, rpc, scValToNative } from '@stellar/stellar-sdk';
 import { DEFAULT_CONTRACT_ID, resolveNetwork } from './networks';
+import { SorobanRpcPool, type RpcNodeHealth } from './rpcPool';
 import { invokeContract, queryContract, type TxOptions } from './transaction';
 import {
   encodeAddress,
@@ -43,6 +44,7 @@ import {
 
 export class PactumClient {
   private readonly opts: TxOptions;
+  private readonly rpcPool: SorobanRpcPool;
   private listeners: Map<PactumEventType, Set<EventCallback<any>>> = new Map();
 
   /**
@@ -53,19 +55,27 @@ export class PactumClient {
    */
   constructor(config: PactumClientConfig = { network: 'testnet' }) {
     const targetNetwork = config?.network || 'testnet';
-    const { rpcUrl, networkPassphrase } = resolveNetwork(
+    const { rpcUrls, networkPassphrase } = resolveNetwork(
       targetNetwork,
       config?.rpcUrl,
       config?.networkPassphrase,
+      config?.rpcUrls,
     );
 
     const contractId = config?.contractId ?? DEFAULT_CONTRACT_ID;
 
+    this.rpcPool = new SorobanRpcPool(rpcUrls, config?.rpcPool);
+
     this.opts = {
-      rpcServer: new rpc.Server(rpcUrl, { allowHttp: false }),
+      rpcServer: this.rpcPool.server,
       contract: new Contract(contractId),
       networkPassphrase,
     };
+  }
+
+  /** Read-only diagnostic snapshot of health and latency for configured RPC nodes. */
+  public getRpcHealth(): RpcNodeHealth[] {
+    return this.rpcPool.getHealth();
   }
 
   // ─── Event Listener Methods ───────────────────────────────────────────────

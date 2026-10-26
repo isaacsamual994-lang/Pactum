@@ -26,6 +26,7 @@ const PRESETS: Record<Exclude<Network, 'custom'>, NetworkPreset> = {
 
 export interface ResolvedNetwork {
   rpcUrl: string;
+  rpcUrls: string[];
   networkPassphrase: string;
 }
 
@@ -38,20 +39,28 @@ export function resolveNetwork(
   network: Network = 'testnet',
   rpcUrl?: string,
   networkPassphrase?: string,
+  rpcUrls?: string[],
 ): ResolvedNetwork {
   const targetNetwork = network || 'testnet';
+  if (rpcUrls !== undefined && (!Array.isArray(rpcUrls) || rpcUrls.length === 0)) {
+    throw new Error('PactumClient: rpcUrls must be a nonempty array when provided.');
+  }
+
+  const firstUrl = rpcUrls?.[0] ?? rpcUrl;
   if (targetNetwork === 'custom') {
-    if (!rpcUrl || !networkPassphrase) {
+    if (!firstUrl || !networkPassphrase) {
       throw new Error(
-        "PactumClient: 'rpcUrl' and 'networkPassphrase' are required when network is 'custom'.",
+        "PactumClient: 'rpcUrl' or 'rpcUrls', and 'networkPassphrase' are required when network is 'custom'.",
       );
     }
-    return { rpcUrl, networkPassphrase };
+    return { rpcUrl: firstUrl, rpcUrls: rpcUrls ?? [firstUrl], networkPassphrase };
   }
 
   const preset = PRESETS[targetNetwork] || PRESETS.testnet;
+  const url = firstUrl ?? preset.rpcUrl;
   return {
-    rpcUrl: rpcUrl ?? preset.rpcUrl,
+    rpcUrl: url,
+    rpcUrls: rpcUrls ?? [url],
     networkPassphrase: networkPassphrase ?? preset.networkPassphrase,
   };
 }

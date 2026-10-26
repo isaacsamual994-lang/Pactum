@@ -1,3 +1,5 @@
+import type { RpcPoolOptions } from './rpcPool';
+
 /**
  * Mirrors the on-chain CommitmentStatus enum defined in contracts/registry/src/commitments.rs.
  * Values match the Soroban u32 discriminant ordering.
@@ -63,6 +65,14 @@ export interface PactumClientConfig {
    * Optional for named presets (overrides the default URL for that network).
    */
   rpcUrl?: string;
+  /**
+   * Optional alternative Soroban RPC endpoints, all on the configured network.
+   * When provided, this list takes precedence over rpcUrl.
+   * Reads may be hedged across these endpoints; submissions are never replayed.
+   */
+  rpcUrls?: string[];
+  /** Configure the optional multi-endpoint RPC pool. */
+  rpcPool?: RpcPoolOptions;
   /**
    * Override the network passphrase. Required when `network` is 'custom'.
    * Optional for named presets.
